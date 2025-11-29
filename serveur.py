@@ -89,3 +89,38 @@ def reconnect(client_socket, player_id):
         except:
             print(f"Erreur de reconnexion pour le joueur {player_id + 1}, nouvelle tentative dans 5 secondes...")
             time.sleep(5)
+            # Fonction pour notifier tous les joueurs et observateurs
+def notify_players(message):
+    # Notifier tous les joueurs
+    for player in players.values():
+        if player:
+            try:
+                player.send(message.encode())
+            except:
+                pass
+    # Notifier tous les observateurs
+    for observer in observers:
+        try:
+            observer.send(message.encode())
+        except:
+            pass
+
+# Fonction pour gérer la reconnexion d'un joueur
+def reconnect(client_socket, player_id):
+    global game_paused
+    print(f"Attente de reconnexion pour le joueur {player_id + 1}...")
+    time.sleep(5)  # Attente avant la reconnexion
+
+    while True:
+        try:
+            # Tentative de reconnexion sur le même port
+            client_socket.connect(('localhost', 7777))  # Reconnexion sur le même serveur
+            client_socket.send(f"Reconnexion réussie, vous êtes le joueur {player_id + 1}.".encode())
+            game_paused = False  # Relancer le jeu
+            players[player_id] = client_socket  # Ajouter le joueur reconnecté
+            print(f"Le joueur {player_id + 1} s'est reconnecté.")
+            notify_players(f"Le joueur {player_id + 1} s'est reconnecté, la partie reprend.")
+            break
+        except:
+            print(f"Erreur de reconnexion pour le joueur {player_id + 1}, nouvelle tentative dans 5 secondes...")
+            time.sleep(5)
