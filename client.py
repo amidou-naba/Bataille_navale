@@ -100,4 +100,23 @@ def start_client(server_ip, server_port=7777):
                 else:
                     print(" Reconnexion impossible.")
                     break
+    else:
+        print(" Mode observateur activé.")
+        while True:
+            try:
+                message = client.recv(1024).decode()
+                print(f"[OBS] {message}")
+            except socket.error as e:
+                print(f"Connexion perdue : {e}")
+                print("Réessai dans 15 secondes...")
+                client.close()
+                time.sleep(15)
+
+                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if connecter_au_serveur():
+                    print(" Reconnexion réussie.")
+                    continue
+                else:
+                    print(" Impossible de se reconnecter.")
+                    break
 
