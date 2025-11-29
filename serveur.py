@@ -45,3 +45,13 @@ def handle_client(client_socket, player_id):
             # Les observateurs attendent passivement les notifications du serveur
             while not game_paused:
                 time.sleep(15)
+                  except Exception as e:
+        print(f"Erreur avec le joueur {player_id + 1}: {e}")
+        # En cas de déconnexion, mettre la partie en pause
+        game_paused = True
+        notify_players(f"Le joueur {player_id + 1} a été déconnecté. La partie est en pause.")
+        reconnect(client_socket, player_id)
+
+    finally:
+        client_socket.close()
+
