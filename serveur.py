@@ -124,3 +124,68 @@ def reconnect(client_socket, player_id):
         except:
             print(f"Erreur de reconnexion pour le joueur {player_id + 1}, nouvelle tentative dans 5 secondes...")
             time.sleep(5)
+
+            # Fonction pour notifier tous les joueurs et observateurs
+def notify_players(message):
+    # Notifier tous les joueurs
+    for player in players.values():
+        if player:
+            try:
+                player.send(message.encode())
+            except:
+                pass
+    # Notifier tous les observateurs
+    for observer in observers:
+        try:
+            observer.send(message.encode())
+        except:
+            pass
+
+# Fonction pour gérer la reconnexion d'un joueur
+def reconnect(client_socket, player_id):
+    global game_paused
+    print(f"Attente de reconnexion pour le joueur {player_id + 1}...")
+    time.sleep(5)  # Attente avant la reconnexion
+
+    while True:
+        try:
+            # Tentative de reconnexion sur le même port
+            client_socket.connect(('localhost', 7777))  # Reconnexion sur le même serveur
+            client_socket.send(f"Reconnexion réussie, vous êtes le joueur {player_id + 1}.".encode())
+            game_paused = False  # Relancer le jeu
+            players[player_id] = client_socket  # Ajouter le joueur reconnecté
+            print(f"Le joueur {player_id + 1} s'est reconnecté.")
+            notify_players(f"Le joueur {player_id + 1} s'est reconnecté, la partie reprend.")
+            break
+        except:
+            print(f"Erreur de reconnexion pour le joueur {player_id + 1}, nouvelle tentative dans 5 secondes...")
+            time.sleep(5)
+
+# Fonction principale pour démarrer le serveur
+def start_server(host='0.0.0.0', port=7777):
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Réutilisation du port
+    server.bind((host, port))
+    server.listen(3)  # Limite de 3 connexions (2 joueurs + 1 observateur)
+
+    print("Serveur prêt à recevoir des connexions...")
+
+    player_id = 0
+    while True:
+        client_socket, addr = server.accept()
+        print(f"Connexion acceptée de {addr}")
+
+        if player_id < 2:
+            # Ajouter les 2 premiers clients comme joueurs
+            clients.append(client_socket)
+            players[player_id] = client_socket
+        else:
+            # Le 3ème client devient un observateur
+            observers.append(client_socket)
+
+        # Créer un thread pour chaque client
+        threading.Thread(target=handle_client, args=(client_socket, player_id)).start()
+        player_id += 1
+
+if __name__ == "__main__":
+    start_server()
