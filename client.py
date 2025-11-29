@@ -12,4 +12,21 @@ def print_grid(grid):
         index = str(i + 1).ljust(2)
         print(f"{index} {row}")
     print("    " + letters + "\n")
+def ask_for_shot():
+    """Demande colonne et ligne séparément."""
+    while True:
+        col = input("Quelle colonne (A-J) ? ").upper()
+        if col in "ABCDEFGHIJ":
+            col_index = ord(col) - ord("A")
+            break
+        print(" Colonne invalide.")
+
+    while True:
+        row = input("Quelle ligne (1-10) ? ")
+        if row.isdigit() and 1 <= int(row) <= 10:
+            row_index = int(row) - 1
+            break
+        print(" Ligne invalide.")
+
+    return row_index, col_index
 
