@@ -17,7 +17,7 @@ def handle_client(client_socket, player_id):
     try:
         # Envoyer un message d'accueil au joueur
         if player_id <= 1:
-            client_socket.send(f"Bienvenue, vous êtes le joueur {player_id + 1}. Entrez la position de vos bateaux (ex: A1, B2, C3): ".encode())
+            client_socket.send(f"Bienvenue, vous êtes le joueur {player_id + 1}. Entrez la position de vos bateaux (ex: A1): ".encode())
             bateaux_positions = client_socket.recv(1024).decode()
             batailles[f"player_{player_id + 1}"] = bateaux_positions.split(',')
             print(f"Joueur {player_id + 1} a positionné ses bateaux: {bateaux_positions}")
@@ -46,7 +46,7 @@ def handle_client(client_socket, player_id):
         else:
             # Les observateurs attendent passivement les notifications du serveur
             while not game_paused:
-                time.sleep(0.5)
+                time.sleep(15)
 
     except Exception as e:
         print(f"Erreur avec le joueur {player_id + 1}: {e}")
