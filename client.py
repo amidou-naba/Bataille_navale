@@ -119,4 +119,7 @@ def start_client(server_ip, server_port=7777):
                 else:
                     print(" Impossible de se reconnecter.")
                     break
+if __name__ == "__main__":
+    server_ip = input("Entrez l'adresse du serveur : ")
+    start_client(server_ip)
 
