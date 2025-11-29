@@ -29,4 +29,24 @@ def ask_for_shot():
         print(" Ligne invalide.")
 
     return row_index, col_index
+def start_client(server_ip, server_port=7777):
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def connecter_au_serveur():
+        """Tente une connexion au serveur."""
+        try:
+            client.connect((server_ip, server_port))
+            print(" Connexion réussie au serveur.")
+            return True
+        except socket.error as e:
+            print(f" Erreur de connexion : {e}")
+            return False
+
+    # Tentative initiale
+    if not connecter_au_serveur():
+        print("Nouvel essai dans 15 secondes...")
+        time.sleep(15)
+        if not connecter_au_serveur():
+            print(" Impossible de se connecter.")
+            return
 
