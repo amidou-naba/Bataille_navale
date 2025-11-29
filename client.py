@@ -49,4 +49,55 @@ def start_client(server_ip, server_port=7777):
         if not connecter_au_serveur():
             print(" Impossible de se connecter.")
             return
+    # Message de bienvenue
+    message = client.recv(1024).decode()
+    print(message)
+
+    if "joueur" in message.lower():
+
+        # Grille du joueur
+        grid = create_empty_grid()
+
+        # Envoyer positions des bateaux
+        bateaux_positions = input("Entrez la position de vos bateaux (ex: A1): ")
+        client.send(bateaux_positions.encode())
+
+        while True:
+            try:
+                # Message du serveur (tour de jeu ou update)
+                msg = client.recv(1024).decode()
+                print(msg)
+
+                # Vérification que c'est le tour du joueur
+                if "C'est votre tour" in msg:
+
+                    print("\n VOTRE GRILLE ")
+                    print_grid(grid)
+
+                    # Demander un tir
+                    row, col = ask_for_shot()
+
+                    coup = f"{chr(col + ord('A'))}{row + 1}"
+                    client.send(coup.encode())
+
+                    # Réponse du serveur
+                    result = client.recv(1024).decode()
+                    print(result)
+
+                    # Marquer le tir sur la grille
+                    grid[row][col] = "X"
+
+            except socket.error as e:
+                print(f"⚠ Connexion perdue : {e}")
+                print("Tentative de reconnexion dans 15 secondes...")
+                client.close()
+                time.sleep(15)
+
+                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if connecter_au_serveur():
+                    print(" Reconnexion réussie.")
+                    continue
+                else:
+                    print(" Reconnexion impossible.")
+                    break
 
