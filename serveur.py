@@ -22,3 +22,26 @@ def handle_client(client_socket, player_id):
             print(f"Joueur {player_id + 1} a positionné ses bateaux: {bateaux_positions}")
         else:
             client_socket.send("Bienvenue, vous êes un observateur. Vous ne pouvez pas jouer.".encode())
+ if player_id <= 1:
+            # Attendre que le joueur joue son tour
+            while not game_paused:
+                if player_turn == player_id:
+                    # Si c'est son tour et que c'est un joueur, demander un coup
+                    client_socket.send("C'est votre tour, entrez un coup (ex: A1): ".encode())
+                    coup = client_socket.recv(1024).decode()
+                    print(f"Joueur {player_id + 1} a joué le coup: {coup}")
+
+                    # Changer de joueur pour le prochain tour
+                    player_turn = 1 - player_id
+                    notify_players(f"Joueur {player_id + 1} a joué: {coup}")
+
+                    client_socket.send(f"Votre coup {coup} a été joué.".encode())
+
+                else:
+                    # Si ce n'est pas son tour, le serveur ne doit pas faire de répétitions inutiles
+                    time.sleep(0.5)  # Attendre un peu avant de vérifier à nouveau
+
+        else:
+            # Les observateurs attendent passivement les notifications du serveur
+            while not game_paused:
+                time.sleep(15)
