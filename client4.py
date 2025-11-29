@@ -1,5 +1,10 @@
 import socket
 import time
+import json
+
+# -----------------------------
+#  GRILLE BATAILLE NAVALE
+# -----------------------------
 
 def create_empty_grid():
     """Crée une grille vide 10x10."""
@@ -24,16 +29,37 @@ def ask_for_shot():
         if col in "ABCDEFGHIJ":
             col_index = ord(col) - ord("A")
             break
-        print(" Colonne invalide.")
+        print("❌ Colonne invalide.")
 
     while True:
         row = input("Quelle ligne (1-10) ? ")
         if row.isdigit() and 1 <= int(row) <= 10:
             row_index = int(row) - 1
             break
-        print(" Ligne invalide.")
+        print("❌ Ligne invalide.")
 
     return row_index, col_index
+
+
+def apply_game_state(state, grid):
+    """Met à jour la grille locale avec l'état envoyé par le serveur."""
+    print("\n📥 Restauration de l'état du jeu...")
+
+    # Grille complète envoyée par le serveur
+    saved_grid = state.get("my_grid", None)
+
+    if saved_grid:
+        for i in range(10):
+            for j in range(10):
+                grid[i][j] = saved_grid[i][j]
+
+    print("✔ État restauré !")
+    print("\n===== VOTRE GRILLE RESTAURÉE =====")
+    print_grid(grid)
+
+# -----------------------------
+#  CLIENT PRINCIPAL
+# -----------------------------
 
 def start_client(server_ip, server_port=7777):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,10 +68,10 @@ def start_client(server_ip, server_port=7777):
         """Tente une connexion au serveur."""
         try:
             client.connect((server_ip, server_port))
-            print(" Connexion réussie au serveur.")
+            print("✔ Connexion réussie au serveur.")
             return True
         except socket.error as e:
-            print(f" Erreur de connexion : {e}")
+            print(f"❌ Erreur de connexion : {e}")
             return False
 
     # Tentative initiale
@@ -53,45 +79,56 @@ def start_client(server_ip, server_port=7777):
         print("Nouvel essai dans 15 secondes...")
         time.sleep(15)
         if not connecter_au_serveur():
-            print(" Impossible de se connecter.")
+            print("❌ Impossible de se connecter.")
             return
 
-    # Message de bienvenue
+    # Message initial
     message = client.recv(1024).decode()
     print(message)
 
+    # Grille du joueur locale
+    grid = create_empty_grid()
+
+    # ---------------------------------
+    #         MODE JOUEUR
+    # ---------------------------------
     if "joueur" in message.lower():
 
-        # Grille du joueur
-        grid = create_empty_grid()
-
-        # Envoyer positions des bateaux
-        bateaux_positions = input("Entrez la position de vos bateaux (ex: A1): ")
-        client.send(bateaux_positions.encode())
+        # Envoyer positions bateaux si première connexion
+        if "reconnexion" not in message.lower():
+            bateaux_positions = input("Entrez la position de vos bateaux (ex: A1, B2, C3): ")
+            client.send(bateaux_positions.encode())
+        else:
+            print("🌀 Reconnexion détectée. En attente de l'état du jeu...")
 
         while True:
             try:
-                # Message du serveur (tour de jeu ou update)
-                msg = client.recv(1024).decode()
+                # Réception message serveur
+                msg = client.recv(4096).decode()
+
+                # 🔥 ÉTAT COMPLET DU JEU REÇU
+                if msg.startswith("STATE "):
+                    json_state = msg.replace("STATE ", "")
+                    state = json.loads(json_state)
+                    apply_game_state(state, grid)
+                    continue
+
                 print(msg)
 
-                # Vérification que c'est le tour du joueur
+                # Tour du joueur
                 if "C'est votre tour" in msg:
 
-                    print("\n VOTRE GRILLE ")
+                    print("\n===== VOTRE GRILLE =====")
                     print_grid(grid)
 
-                    # Demander un tir
                     row, col = ask_for_shot()
 
                     coup = f"{chr(col + ord('A'))}{row + 1}"
                     client.send(coup.encode())
 
-                    # Réponse du serveur
                     result = client.recv(1024).decode()
                     print(result)
 
-                    # Marquer le tir sur la grille
                     grid[row][col] = "X"
 
             except socket.error as e:
@@ -102,14 +139,17 @@ def start_client(server_ip, server_port=7777):
 
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if connecter_au_serveur():
-                    print(" Reconnexion réussie.")
+                    print("✔ Reconnexion réussie.")
                     continue
                 else:
-                    print(" Reconnexion impossible.")
+                    print("❌ Reconnexion impossible.")
                     break
 
+    # ---------------------------------
+    #        MODE OBSERVATEUR
+    # ---------------------------------
     else:
-        print(" Mode observateur activé.")
+        print("🔍 Mode observateur activé.")
         while True:
             try:
                 message = client.recv(1024).decode()
@@ -122,11 +162,16 @@ def start_client(server_ip, server_port=7777):
 
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if connecter_au_serveur():
-                    print(" Reconnexion réussie.")
+                    print("✔ Reconnexion réussie.")
                     continue
                 else:
-                    print(" Impossible de se reconnecter.")
+                    print("❌ Impossible de se reconnecter.")
                     break
+
+
+# -----------------------------
+#  LANCEMENT
+# -----------------------------
 
 if __name__ == "__main__":
     server_ip = input("Entrez l'adresse du serveur : ")
