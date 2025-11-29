@@ -129,6 +129,6 @@ def start_client(server_ip, server_port=7777):
                     break
 
 if __name__ == "__main__":
-    server_ip = input("Entrez l'adresse du serveur : ")
-    start_client(server_ip)
+      server_ip = input("Entrez l'adresse du serveur : ")
+      start_client(server_ip)
 
