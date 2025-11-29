@@ -28,14 +28,14 @@ def ask_for_shot():
         if col in "ABCDEFGHIJ":
             col_index = ord(col) - ord("A")
             break
-        print("❌ Colonne invalide.")
+        print(" Colonne invalide.")
 
     while True:
         row = input("Quelle ligne (1-10) ? ")
         if row.isdigit() and 1 <= int(row) <= 10:
             row_index = int(row) - 1
             break
-        print("❌ Ligne invalide.")
+        print(" Ligne invalide.")
 
     return row_index, col_index
 
@@ -54,7 +54,7 @@ def start_client(server_ip, server_port=7777):
             print("✔ Connexion réussie au serveur.")
             return True
         except socket.error as e:
-            print(f"❌ Erreur de connexion : {e}")
+            print(f" Erreur de connexion : {e}")
             return False
 
     # Tentative initiale
@@ -62,7 +62,7 @@ def start_client(server_ip, server_port=7777):
         print("Nouvel essai dans 15 secondes...")
         time.sleep(15)
         if not connecter_au_serveur():
-            print("❌ Impossible de se connecter.")
+            print(" Impossible de se connecter.")
             return
 
     # Message de bienvenue
@@ -117,14 +117,14 @@ def start_client(server_ip, server_port=7777):
                     print("✔ Reconnexion réussie.")
                     continue
                 else:
-                    print("❌ Reconnexion impossible.")
+                    print(" Reconnexion impossible.")
                     break
 
     # ---------------------------------
     #        MODE OBSERVATEUR
     # ---------------------------------
     else:
-        print("🔍 Mode observateur activé.")
+        print(" Mode observateur activé.")
         while True:
             try:
                 message = client.recv(1024).decode()
@@ -137,10 +137,10 @@ def start_client(server_ip, server_port=7777):
 
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 if connecter_au_serveur():
-                    print("✔ Reconnexion réussie.")
+                    print(" Reconnexion réussie.")
                     continue
                 else:
-                    print("❌ Impossible de se reconnecter.")
+                    print(" Impossible de se reconnecter.")
                     break
 
 
